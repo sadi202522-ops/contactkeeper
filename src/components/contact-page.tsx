@@ -1,39 +1,41 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Contact } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { ContactForm } from "./contact-form";
 import { ContactList } from "./contact-list";
 import { Logo } from "./icons";
-
-const initialContacts: Contact[] = [
-  {
-    id: "1",
-    name: "Alice Johnson",
-    phoneNumber: "555-0101",
-    nickname: "AJ",
-  },
-  {
-    id: "2",
-    name: "Charlie Brown",
-    phoneNumber: "555-0103",
-    nickname: "Chuck",
-  },
-  {
-    id: "3",
-    name: "Bob Smith",
-    phoneNumber: "555-0102",
-    nickname: "Bobby",
-  },
-];
+import { db } from "@/lib/firebase";
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
 
 export function ContactPage() {
-  const [contacts, setContacts] = useState<Contact[]>(initialContacts);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState<Contact | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "contacts"), (snapshot) => {
+      const contactsData = snapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          } as Contact)
+      );
+      setContacts(contactsData);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleAddContact = () => {
     setContactToEdit(null);
@@ -45,16 +47,21 @@ export function ContactPage() {
     setIsFormOpen(true);
   };
 
-  const handleDeleteContact = (contactId: string) => {
-    setContacts(contacts.filter((c) => c.id !== contactId));
+  const handleDeleteContact = async (contactId: string) => {
+    await deleteDoc(doc(db, "contacts", contactId));
   };
 
-  const handleSaveContact = (contact: Contact) => {
+  const handleSaveContact = async (contact: Contact) => {
     const isEditing = contacts.some((c) => c.id === contact.id);
     if (isEditing) {
-      setContacts(contacts.map((c) => (c.id === contact.id ? contact : c)));
+      const docRef = doc(db, "contacts", contact.id);
+      await updateDoc(docRef, { ...contact });
     } else {
-      setContacts([...contacts, contact]);
+      await addDoc(collection(db, "contacts"), {
+        name: contact.name,
+        phoneNumber: contact.phoneNumber,
+        nickname: contact.nickname,
+      });
     }
   };
 

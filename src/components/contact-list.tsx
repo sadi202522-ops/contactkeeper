@@ -73,7 +73,7 @@ export function ContactList({
               <TableCell className="font-medium">{contact.name}</TableCell>
               <TableCell>{contact.phoneNumber}</TableCell>
               <TableCell className="text-muted-foreground">
-                {contact.nickname || "N/A"}
+                {contact.nickname}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

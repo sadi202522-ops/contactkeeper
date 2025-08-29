@@ -36,7 +36,7 @@ const contactSchema = z.object({
       /^\+?[0-9\s-()]+$/,
       "Invalid phone number format"
     ),
-  nickname: z.string().optional(),
+  nickname: z.string().min(1, "Nickname is required"),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
