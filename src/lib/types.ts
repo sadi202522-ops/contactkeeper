@@ -6,5 +6,4 @@ export interface Contact {
   nickname: string;
   photoUrl?: string;
   bio?: string;
-  userId?: string;
 }

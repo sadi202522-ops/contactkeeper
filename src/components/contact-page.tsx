@@ -4,11 +4,11 @@
 import { useState, useMemo, useEffect } from "react";
 import type { Contact } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, LogOut, Search } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react";
 import { ContactForm } from "./contact-form";
 import { ContactList } from "./contact-list";
 import { Logo } from "./icons";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import {
   collection,
   addDoc,
@@ -17,10 +17,7 @@ import {
   onSnapshot,
   updateDoc,
   query,
-  where,
 } from "firebase/firestore";
-import { useAuth } from "@/hooks/use-auth";
-import { signOut } from "firebase/auth";
 import { Input } from "@/components/ui/input";
 
 export function ContactPage() {
@@ -29,12 +26,9 @@ export function ContactPage() {
   const [contactToEdit, setContactToEdit] = useState<Contact | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [searchTerm, setSearchTerm] = useState("");
-  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
-
-    const q = query(collection(db, "contacts"), where("userId", "==", user.uid));
+    const q = query(collection(db, "contacts"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const contactsData = snapshot.docs.map(
         (doc) =>
@@ -46,7 +40,7 @@ export function ContactPage() {
       setContacts(contactsData);
     });
     return () => unsubscribe();
-  }, [user]);
+  }, []);
 
   const handleAddContact = () => {
     setContactToEdit(null);
@@ -59,12 +53,10 @@ export function ContactPage() {
   };
 
   const handleDeleteContact = async (contactId: string) => {
-    if (!user) return;
     await deleteDoc(doc(db, "contacts", contactId));
   };
 
   const handleSaveContact = async (contact: Contact) => {
-    if (!user) return;
     const isEditing = contacts.some((c) => c.id === contact.id);
     if (isEditing) {
       const docRef = doc(db, "contacts", contact.id);
@@ -72,15 +64,10 @@ export function ContactPage() {
     } else {
       await addDoc(collection(db, "contacts"), {
         ...contact,
-        userId: user.uid,
       });
     }
   };
   
-  const handleSignOut = async () => {
-    await signOut(auth);
-  };
-
   const handleSort = () => {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
@@ -124,10 +111,6 @@ export function ContactPage() {
           <Button onClick={handleAddContact} className="shrink-0">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Contact
-          </Button>
-          <Button variant="outline" onClick={handleSignOut} className="shrink-0">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
           </Button>
         </div>
       </header>
