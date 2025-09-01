@@ -74,7 +74,7 @@ export function ContactList({
               </Button>
             </TableHead>
             <TableHead className="w-[30%]">Phone Number</TableHead>
-            <TableHead className="w-[30%]">Nickname</TableHead>
+            <TableHead className="w-[30%]">Info</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -91,8 +91,11 @@ export function ContactList({
                 </div>
               </TableCell>
               <TableCell>{contact.phoneNumber}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {contact.nickname}
+              <TableCell>
+                <div className="flex flex-col">
+                  <span className="font-medium">{contact.nickname}</span>
+                  <span className="text-sm text-muted-foreground">{contact.bio}</span>
+                </div>
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>

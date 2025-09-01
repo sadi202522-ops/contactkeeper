@@ -23,12 +23,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Sparkles, LoaderCircle, Phone, User, StickyNote, Image as ImageIcon } from "lucide-react";
+import { Sparkles, LoaderCircle, Phone, User, StickyNote, Image as ImageIcon, FileText } from "lucide-react";
 import { generateContactNickname } from "@/ai/flows/generate-contact-nickname";
 import { generateContactPhoto } from "@/ai/flows/generate-contact-photo";
+import { generateContactBio } from "@/ai/flows/generate-contact-bio";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -41,6 +43,7 @@ const contactSchema = z.object({
     ),
   nickname: z.string().min(1, "Nickname is required"),
   photoUrl: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -60,6 +63,7 @@ export function ContactForm({
 }: ContactFormProps) {
   const [isGeneratingNickname, setIsGeneratingNickname] = useState(false);
   const [isGeneratingPhoto, setIsGeneratingPhoto] = useState(false);
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ContactFormValues>({
@@ -69,6 +73,7 @@ export function ContactForm({
       phoneNumber: "",
       nickname: "",
       photoUrl: "",
+      bio: "",
     },
   });
 
@@ -78,7 +83,7 @@ export function ContactForm({
     if (contactToEdit) {
       form.reset(contactToEdit);
     } else {
-      form.reset({ name: "", phoneNumber: "", nickname: "", photoUrl: "" });
+      form.reset({ name: "", phoneNumber: "", nickname: "", photoUrl: "", bio: "" });
     }
   }, [contactToEdit, form]);
 
@@ -133,6 +138,33 @@ export function ContactForm({
       });
     } finally {
       setIsGeneratingPhoto(false);
+    }
+  };
+  
+  const handleGenerateBio = async () => {
+    const { name, nickname } = form.getValues();
+    if (!name || !nickname) {
+      toast({
+        title: "Name and Nickname Required",
+        description: "Please enter a name and nickname to generate a bio.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingBio(true);
+    try {
+      const result = await generateContactBio({ name, nickname });
+      form.setValue("bio", result.bio, { shouldValidate: true });
+    } catch (error) {
+      console.error("Error generating bio:", error);
+      toast({
+        title: "Bio Generation Failed",
+        description: "Could not generate a bio. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingBio(false);
     }
   };
 
@@ -247,6 +279,38 @@ export function ContactForm({
                       aria-label="Generate Nickname"
                     >
                       {isGeneratingNickname ? (
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-grow">
+                       <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                       <FormControl>
+                        <Textarea placeholder="A short bio about the contact" {...field} className="pl-10 min-h-[60px]" />
+                       </FormControl>
+                    </div>
+                     <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGenerateBio}
+                      disabled={isGeneratingBio}
+                      aria-label="Generate Bio"
+                    >
+                      {isGeneratingBio ? (
                         <LoaderCircle className="h-4 w-4 animate-spin" />
                       ) : (
                         <Sparkles className="h-4 w-4" />

@@ -62,6 +62,7 @@ export function ContactPage() {
         phoneNumber: contact.phoneNumber,
         nickname: contact.nickname,
         photoUrl: contact.photoUrl || "",
+        bio: contact.bio || "",
       });
     }
   };

@@ -4,4 +4,5 @@ export interface Contact {
   phoneNumber: string;
   nickname: string;
   photoUrl?: string;
+  bio?: string;
 }
