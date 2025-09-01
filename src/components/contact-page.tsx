@@ -73,11 +73,14 @@ export function ContactPage() {
   };
 
   const filteredAndSortedContacts = useMemo(() => {
-    const filtered = contacts.filter(
-      (contact) =>
-        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.phoneNumber.includes(searchTerm)
-    );
+    const filtered = contacts.filter((contact) => {
+      if (!searchTerm) return true;
+
+      const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+      const contactText = `${contact.name.toLowerCase()} ${contact.phoneNumber}`;
+
+      return searchWords.every(word => contactText.includes(word));
+    });
 
     return [...filtered].sort((a, b) => {
       if (sortOrder === "asc") {
