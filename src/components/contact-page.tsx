@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useContext } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Contact } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, LogOut } from "lucide-react";
+import { PlusCircle, LogOut, Search } from "lucide-react";
 import { ContactForm } from "./contact-form";
 import { ContactList } from "./contact-list";
 import { Logo } from "./icons";
@@ -21,12 +21,14 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "firebase/auth";
+import { Input } from "@/components/ui/input";
 
 export function ContactPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [contactToEdit, setContactToEdit] = useState<Contact | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -83,31 +85,47 @@ export function ContactPage() {
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   };
 
-  const sortedContacts = useMemo(() => {
-    return [...contacts].sort((a, b) => {
+  const filteredAndSortedContacts = useMemo(() => {
+    const filtered = contacts.filter(
+      (contact) =>
+        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.phoneNumber.includes(searchTerm)
+    );
+
+    return [...filtered].sort((a, b) => {
       if (sortOrder === "asc") {
         return a.name.localeCompare(b.name);
       } else {
         return b.name.localeCompare(a.name);
       }
     });
-  }, [contacts, sortOrder]);
+  }, [contacts, sortOrder, searchTerm]);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <header className="flex items-center justify-between mb-8">
+      <header className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
         <div className="flex items-center gap-3">
           <Logo />
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             Contact Keeper
           </h1>
         </div>
-        <div className="flex items-center gap-4">
-          <Button onClick={handleAddContact}>
+        <div className="flex w-full sm:w-auto items-center gap-4">
+           <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search contacts..."
+              className="pl-10 w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleAddContact} className="shrink-0">
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Contact
           </Button>
-          <Button variant="outline" onClick={handleSignOut}>
+          <Button variant="outline" onClick={handleSignOut} className="shrink-0">
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </Button>
@@ -116,7 +134,7 @@ export function ContactPage() {
 
       <div className="bg-card p-4 sm:p-6 rounded-xl shadow-sm">
         <ContactList
-          contacts={sortedContacts}
+          contacts={filteredAndSortedContacts}
           onEdit={handleEditContact}
           onDelete={handleDeleteContact}
           onSort={handleSort}
