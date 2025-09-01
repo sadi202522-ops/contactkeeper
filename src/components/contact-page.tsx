@@ -61,6 +61,7 @@ export function ContactPage() {
         name: contact.name,
         phoneNumber: contact.phoneNumber,
         nickname: contact.nickname,
+        photoUrl: contact.photoUrl || "",
       });
     }
   };

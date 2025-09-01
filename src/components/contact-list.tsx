@@ -22,7 +22,10 @@ import {
   Trash2,
   ArrowUpDown,
   Users,
+  User,
 } from "lucide-react";
+import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ContactListProps {
   contacts: Contact[];
@@ -50,6 +53,14 @@ export function ContactList({
       </div>
     );
   }
+  
+  const getInitials = (name: string) => {
+    const names = name.split(' ');
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
 
   return (
     <div className="rounded-lg border">
@@ -70,7 +81,15 @@ export function ContactList({
         <TableBody>
           {contacts.map((contact) => (
             <TableRow key={contact.id}>
-              <TableCell className="font-medium">{contact.name}</TableCell>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={contact.photoUrl} alt={contact.name} />
+                    <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
+                  </Avatar>
+                  {contact.name}
+                </div>
+              </TableCell>
               <TableCell>{contact.phoneNumber}</TableCell>
               <TableCell className="text-muted-foreground">
                 {contact.nickname}

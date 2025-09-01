@@ -23,9 +23,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Sparkles, LoaderCircle, Phone, User, StickyNote } from "lucide-react";
+import { Sparkles, LoaderCircle, Phone, User, StickyNote, Image as ImageIcon } from "lucide-react";
 import { generateContactNickname } from "@/ai/flows/generate-contact-nickname";
+import { generateContactPhoto } from "@/ai/flows/generate-contact-photo";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -37,6 +40,7 @@ const contactSchema = z.object({
       "Invalid phone number format"
     ),
   nickname: z.string().min(1, "Nickname is required"),
+  photoUrl: z.string().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -54,7 +58,8 @@ export function ContactForm({
   onSave,
   contactToEdit,
 }: ContactFormProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingNickname, setIsGeneratingNickname] = useState(false);
+  const [isGeneratingPhoto, setIsGeneratingPhoto] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ContactFormValues>({
@@ -63,14 +68,17 @@ export function ContactForm({
       name: "",
       phoneNumber: "",
       nickname: "",
+      photoUrl: "",
     },
   });
+
+  const photoUrl = form.watch("photoUrl");
 
   useEffect(() => {
     if (contactToEdit) {
       form.reset(contactToEdit);
     } else {
-      form.reset({ name: "", phoneNumber: "", nickname: "" });
+      form.reset({ name: "", phoneNumber: "", nickname: "", photoUrl: "" });
     }
   }, [contactToEdit, form]);
 
@@ -85,7 +93,7 @@ export function ContactForm({
       return;
     }
 
-    setIsGenerating(true);
+    setIsGeneratingNickname(true);
     try {
       const result = await generateContactNickname({ name, phoneNumber });
       form.setValue("nickname", result.nickname, { shouldValidate: true });
@@ -97,7 +105,34 @@ export function ContactForm({
         variant: "destructive",
       });
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingNickname(false);
+    }
+  };
+  
+  const handleGeneratePhoto = async () => {
+    const name = form.getValues("name");
+    if (!name) {
+      toast({
+        title: "Name Required",
+        description: "Please enter a name to generate a photo.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGeneratingPhoto(true);
+    try {
+      const result = await generateContactPhoto({ name });
+      form.setValue("photoUrl", result.photoUrl, { shouldValidate: true });
+    } catch (error) {
+      console.error("Error generating photo:", error);
+      toast({
+        title: "Photo Generation Failed",
+        description: "Could not generate a photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPhoto(false);
     }
   };
 
@@ -124,6 +159,40 @@ export function ContactForm({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+             <div className="flex flex-col items-center gap-4">
+               <div className="relative">
+                {isGeneratingPhoto ? (
+                  <Skeleton className="h-24 w-24 rounded-full" />
+                ) : photoUrl ? (
+                  <Image
+                    src={photoUrl}
+                    alt="Contact photo"
+                    width={96}
+                    height={96}
+                    className="rounded-full"
+                  />
+                ) : (
+                  <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                 <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="absolute bottom-0 right-0 rounded-full"
+                    onClick={handleGeneratePhoto}
+                    disabled={isGeneratingPhoto}
+                    aria-label="Generate Photo"
+                  >
+                   {isGeneratingPhoto ? (
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                  </Button>
+               </div>
+            </div>
             <FormField
               control={form.control}
               name="name"
@@ -174,10 +243,10 @@ export function ContactForm({
                       variant="outline"
                       size="icon"
                       onClick={handleGenerateNickname}
-                      disabled={isGenerating}
+                      disabled={isGeneratingNickname}
                       aria-label="Generate Nickname"
                     >
-                      {isGenerating ? (
+                      {isGeneratingNickname ? (
                         <LoaderCircle className="h-4 w-4 animate-spin" />
                       ) : (
                         <Sparkles className="h-4 w-4" />
