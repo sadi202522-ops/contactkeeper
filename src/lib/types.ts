@@ -1,3 +1,4 @@
+
 export interface Contact {
   id: string;
   name: string;
@@ -5,4 +6,5 @@ export interface Contact {
   nickname: string;
   photoUrl?: string;
   bio?: string;
+  userId?: string;
 }
