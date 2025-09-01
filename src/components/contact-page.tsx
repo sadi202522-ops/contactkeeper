@@ -77,9 +77,9 @@ export function ContactPage() {
       if (!searchTerm) return true;
 
       const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
-      const contactText = `${contact.name.toLowerCase()} ${contact.phoneNumber}`;
+      const contactText = `${contact.name.toLowerCase()} ${contact.phoneNumber} ${contact.nickname?.toLowerCase() || ''} ${contact.bio?.toLowerCase() || ''}`;
 
-      return searchWords.every(word => contactText.includes(word));
+      return searchWords.some(word => contactText.includes(word));
     });
 
     return [...filtered].sort((a, b) => {
