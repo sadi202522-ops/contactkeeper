@@ -8,7 +8,7 @@ export const Logo = () => (
       width={24}
       height={24}
       className="rounded-sm"
-      data-ai-hint="Sheikh Hasina"
+      data-ai-hint="boy"
     />
   </div>
 );
